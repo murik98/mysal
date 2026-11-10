@@ -8,11 +8,11 @@ jobs:
 
     steps:
       - name: Install sshpass
-        run:
+        run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
       - name: Connect to VPS
-        run: 
+        run: |
           export SSHPASS='2GrnAviaNX7K'
           sshpass -e ssh \ 
             -o StrictHostKeyChecking=accept-new \
