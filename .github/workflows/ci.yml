@@ -11,11 +11,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y sshpass
+
       - name: Connect to VPS
         run: |
           export SSHPASS='2GrnAviaNX7K'
-          sshpass -e ssh \ 
-            -o StrictHostKeyChecking=accept-new \
-            -p 22 \
-            root@ydp.tejribe.online \
-            "whoami && hostname && uptime"
+          sshpass -e ssh -o StrictHostKeyChecking=accept-new -p 22 root@ydp.tejribe.online "whoami && hostname && uptime"
