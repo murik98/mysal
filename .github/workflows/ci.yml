@@ -1,0 +1,21 @@
+name: My First CI
+
+on: push
+
+jobs:
+  connect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install sshpass
+        run:
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+      - name: Connect to VPS
+        run: 
+          export SSHPASS='2GrnAviaNX7K'
+          sshpass -e ssh \ 
+            -o StrictHostKeyChecking=accept-new \
+            -p 22 \
+            root@45.61.158.122 \
+            "whoami && hostanme && uptime"
