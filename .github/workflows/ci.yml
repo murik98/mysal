@@ -18,4 +18,4 @@ jobs:
             -o StrictHostKeyChecking=accept-new \
             -p 22 \
             root@ydp.tejribe.online \
-            "whoami && hostanme && uptime"
+            "whoami && hostname && uptime"
