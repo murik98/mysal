@@ -17,5 +17,5 @@ jobs:
           sshpass -e ssh \ 
             -o StrictHostKeyChecking=accept-new \
             -p 22 \
-            root@45.61.158.122 \
+            root@ydp.tejribe.online \
             "whoami && hostanme && uptime"
