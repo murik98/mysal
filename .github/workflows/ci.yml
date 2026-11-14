@@ -15,7 +15,7 @@ jobs:
 
       - name: Connect and run git pull
         run: |
-          sshpass -p "zdTEPMqLXV93" ssh -o StrictHostKeyChecking=no -p 22 root@sapak.ydp.online << 'EOF'
+          sshpass -p "zdTEPMqLXV93" ssh -o StrictHostKeyChecking=no -p 22 root@sapak.tejribe.online << 'EOF'
             cd ~/neoc_project/
             git pull origin main
           EOF
