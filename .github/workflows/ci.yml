@@ -1,18 +1,17 @@
-name: My First CI
-
-on: push
-
+name: Connect to VPS
+on:
+  push:
+    branches: [ "main" ]
 jobs:
   connect:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Install sshpass
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: 'zdTEPMqLXV93'
+      - name: Connect and test VPS
         run: |
-          sudo apt-get update
-          sudo apt-get install -y sshpass
-
-      - name: Connect to VPS
-        run: |
-          export SSHPASS='2GrnAviaNX7K'
-          sshpass -e ssh -o StrictHostKeyChecking=accept-new -p 22 root@ydp.tejribe.online "whoami && hostname && uptime"
+          ssh -o StrictHostKeyChecking=accept-new -p 22 root@ydp.tejribe.online "whoami && hostname && uptime"
