@@ -1,4 +1,4 @@
-name: Deploy Django to VPS
+name: Deploy and Start Django
 
 on:
   push:
@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Pull updates and restart Django
+      - name: Setup service, pull code and restart
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -18,5 +18,27 @@ jobs:
           script: |
             cd /root/mysal/
             git pull origin main
+            rm -rf /root/mysal/neoc_project/env
+
+            cat << 'EOF' > /etc/systemd/system/django_neoc.service
+            [Unit]
+            Description=Django neoc_project on port 2255
+            After=network.target
+
+            [Service]
+            User=root
+            WorkingDirectory=/root/mysal/neoc_project
+            ExecStart=/usr/bin/python3 manage.py runserver 0.0.0.0:2255
+            Restart=always
+
+            [Install]
+            WantedBy=multi-user.target
+            EOF
+
+            ufw allow 2255 || true
+            systemctl daemon-reload
+            systemctl enable django_neoc
             python3 /root/mysal/neoc_project/manage.py migrate
             systemctl restart django_neoc
+            sleep 2
+            systemctl is-active django_neoc
