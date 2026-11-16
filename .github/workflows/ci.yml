@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup service, pull code and restart
+      - name: Clone or pull code and start Django
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -16,18 +16,26 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
           script: |
-            cd /root/mysal/
-            git pull origin main
-            rm -rf /root/mysal/neoc_project/env
+            PROJECT_DIR="$HOME/mysal"
 
-            cat << 'EOF' > /etc/systemd/system/django_neoc.service
+            if [ ! -d "$PROJECT_DIR/.git" ]; then
+              rm -rf "$PROJECT_DIR"
+              git clone https://github.com/murik98/mysal.git "$PROJECT_DIR"
+            else
+              cd "$PROJECT_DIR"
+              git pull origin main
+            fi
+
+            rm -rf "$PROJECT_DIR/neoc_project/env"
+
+            cat << EOF > /etc/systemd/system/django_neoc.service
             [Unit]
             Description=Django neoc_project on port 2255
             After=network.target
 
             [Service]
             User=root
-            WorkingDirectory=/root/mysal/neoc_project
+            WorkingDirectory=$PROJECT_DIR/neoc_project
             ExecStart=/usr/bin/python3 manage.py runserver 0.0.0.0:2255
             Restart=always
 
@@ -38,7 +46,7 @@ jobs:
             ufw allow 2255 || true
             systemctl daemon-reload
             systemctl enable django_neoc
-            python3 /root/mysal/neoc_project/manage.py migrate
+            python3 "$PROJECT_DIR/neoc_project/manage.py" migrate
             systemctl restart django_neoc
             sleep 2
             systemctl is-active django_neoc
