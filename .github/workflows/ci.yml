@@ -18,5 +18,5 @@ jobs:
           script: |
             cd /root/mysal/
             git pull origin main
-            /root/mysal/neoc_project/venv/bin/python /root/mysal/neoc_project/manage.py migrate
+            python3 /root/mysal/neoc_project/manage.py migrate
             systemctl restart django_neoc
