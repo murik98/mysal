@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Clone or pull code and start Django
+      - name: Deploy to VPS with venv setup
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -26,8 +26,20 @@ jobs:
               git pull origin main
             fi
 
-            rm -rf "$PROJECT_DIR/neoc_project/env"
+            cd "$PROJECT_DIR/neoc_project"
 
+            # Создаем venv, если его еще нет, и устанавливаем зависимости
+            if [ ! -d "env" ]; then
+              python3 -m venv env
+            fi
+            ./env/bin/pip install --upgrade pip
+            if [ -f "requirements.txt" ]; then
+              ./env/bin/pip install -r requirements.txt
+            else
+              ./env/bin/pip install django
+            fi
+
+            # Создаем или обновляем службу systemd, чтобы она использовала именно этот venv
             cat << EOF > /etc/systemd/system/django_neoc.service
             [Unit]
             Description=Django neoc_project on port 2255
@@ -36,7 +48,7 @@ jobs:
             [Service]
             User=root
             WorkingDirectory=$PROJECT_DIR/neoc_project
-            ExecStart=/usr/bin/python3 manage.py runserver 0.0.0.0:2255
+            ExecStart=$PROJECT_DIR/neoc_project/env/bin/python manage.py runserver 0.0.0.0:2255
             Restart=always
 
             [Install]
@@ -46,7 +58,7 @@ jobs:
             ufw allow 2255 || true
             systemctl daemon-reload
             systemctl enable django_neoc
-            python3 "$PROJECT_DIR/neoc_project/manage.py" migrate
+            ./env/bin/python manage.py migrate
             systemctl restart django_neoc
             sleep 2
             systemctl is-active django_neoc
