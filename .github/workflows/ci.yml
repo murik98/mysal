@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy and Check Python
 
 on:
   push:
@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Execute remote SSH commands
+      - name: Connect, check Python and pull updates
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -16,5 +16,12 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
           script: |
-            cd /root/neoc_project/
-            git pull origin main
+            echo "Connected to VPS!"
+            echo "Checking Python..."
+
+            if command -v python3 >/dev/null 2>&1; then
+              echo "Python is installed!"
+              python3 --version
+            else
+              echo "Python is NOT installed!"
+            fi
