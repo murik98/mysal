@@ -1,21 +1,21 @@
-name: My First CI
+name: Deploy to VPS
 
-on: push
+on:
+  push:
+    branches: [ "main" ]
 
 jobs:
-  connect:
+  deploy:
+    name: Deploy project via SSH
     runs-on: ubuntu-latest
-
     steps:
-      - name: Install sshpass
-        run:
-          sudo apt-get update
-          sudo apt-get install -y sshpass
-      - name: Connect to VPS
-        run: 
-          export SSHPASS='2GrnAviaNX7K'
-          sshpass -e ssh \ 
-            -o StrictHostKeyChecking=accept-new \
-            -p 22 \
-            root@45.61.158.122 \
-            "whoami && hostanme && uptime"
+      - name: Execute remote SSH commands
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          script: |
+            cd ~/neoc_project/
+            git pull origin main
