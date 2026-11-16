@@ -1,4 +1,4 @@
-name: Deploy and Check Python
+name: Deploy Django to VPS
 
 on:
   push:
@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Connect, check Python and pull updates
+      - name: Pull updates and restart Django
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -16,12 +16,7 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
           script: |
-            echo "Connected to VPS!"
-            echo "Checking Python..."
-
-            if command -v python3 >/dev/null 2>&1; then
-              echo "Python is installed!"
-              python3 --version
-            else
-              echo "Python is NOT installed!"
-            fi
+            cd /root/mysal/
+            git pull origin main
+            /root/mysal/neoc_project/venv/bin/python /root/mysal/neoc_project/manage.py migrate
+            systemctl restart django_neoc
