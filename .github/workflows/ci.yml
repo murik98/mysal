@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to VPS with venv setup
+      - name: Deploy to VPS and Fix Bind Address
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -28,7 +28,7 @@ jobs:
 
             cd "$PROJECT_DIR/neoc_project"
 
-            # Создаем venv, если его еще нет, и устанавливаем зависимости
+            # Настраиваем venv и зависимости
             if [ ! -d "env" ]; then
               python3 -m venv env
             fi
@@ -39,7 +39,7 @@ jobs:
               ./env/bin/pip install django
             fi
 
-            # Создаем или обновляем службу systemd, чтобы она использовала именно этот venv
+            # Пересоздаем службу systemd с жесткой привязкой к 0.0.0.0:2255
             cat << EOF > /etc/systemd/system/django_neoc.service
             [Unit]
             Description=Django neoc_project on port 2255
@@ -55,10 +55,13 @@ jobs:
             WantedBy=multi-user.target
             EOF
 
+            # Открываем порт в брандмауэре
             ufw allow 2255 || true
+            iptables -A INPUT -p tcp --dport 2255 -j ACCEPT || true
+
             systemctl daemon-reload
             systemctl enable django_neoc
             ./env/bin/python manage.py migrate
             systemctl restart django_neoc
-            sleep 2
-            systemctl is-active django_neoc
+            sleep 3
+            systemctl status django_neoc --no-pager
