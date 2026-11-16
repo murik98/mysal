@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Clone or pull code and start Django
+      - name: Deploy to VPS and Fix Bind Address
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -26,8 +26,20 @@ jobs:
               git pull origin main
             fi
 
-            rm -rf "$PROJECT_DIR/neoc_project/env"
+            cd "$PROJECT_DIR/neoc_project"
 
+            # Настраиваем venv и зависимости
+            if [ ! -d "env" ]; then
+              python3 -m venv env
+            fi
+            ./env/bin/pip install --upgrade pip
+            if [ -f "requirements.txt" ]; then
+              ./env/bin/pip install -r requirements.txt
+            else
+              ./env/bin/pip install django
+            fi
+
+            # Пересоздаем службу systemd с жесткой привязкой к 0.0.0.0:2255
             cat << EOF > /etc/systemd/system/django_neoc.service
             [Unit]
             Description=Django neoc_project on port 2255
@@ -36,17 +48,20 @@ jobs:
             [Service]
             User=root
             WorkingDirectory=$PROJECT_DIR/neoc_project
-            ExecStart=/usr/bin/python3 manage.py runserver 0.0.0.0:2255
+            ExecStart=$PROJECT_DIR/neoc_project/env/bin/python manage.py runserver 0.0.0.0:2255
             Restart=always
 
             [Install]
             WantedBy=multi-user.target
             EOF
 
+            # Открываем порт в брандмауэре
             ufw allow 2255 || true
+            iptables -A INPUT -p tcp --dport 2255 -j ACCEPT || true
+
             systemctl daemon-reload
             systemctl enable django_neoc
-            python3 "$PROJECT_DIR/neoc_project/manage.py" migrate
+            ./env/bin/python manage.py migrate
             systemctl restart django_neoc
-            sleep 2
-            systemctl is-active django_neoc
+            sleep 3
+            systemctl status django_neoc --no-pager
