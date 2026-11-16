@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Deploy Django to VPS
 
 on:
   push:
@@ -6,10 +6,9 @@ on:
 
 jobs:
   deploy:
-    name: Deploy project via SSH
     runs-on: ubuntu-latest
     steps:
-      - name: Execute remote SSH commands
+      - name: Pull updates and restart Django
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -17,5 +16,7 @@ jobs:
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
           script: |
-            cd ~/neoc_project/
+            cd /root/mysal/
             git pull origin main
+            python3 /root/mysal/neoc_project/manage.py migrate
+            systemctl restart django_neoc
